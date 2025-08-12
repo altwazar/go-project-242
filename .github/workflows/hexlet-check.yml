@@ -13,12 +13,27 @@ on:
       - '**'
 
 jobs:
-  build:
+  # На гитхабе (нельзя использовать полный путь с https)
+  build-github:
+    if: ${{ github.server_url == 'https://github.com' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Hexlet project check
-        uses: http://github.com/hexlet/project-action@release
+        uses: hexlet/project-action@release
+        with:
+          hexlet-id: ${{ secrets.HEXLET_ID }}
+
+
+  # На forgejo runner (полный путь до экшена на гитхабе)
+  build-forgejo:
+    if: ${{ github.server_url != 'https://github.com' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hexlet project check
+        uses: https://github.com/hexlet/project-action@release
         with:
           hexlet-id: ${{ secrets.HEXLET_ID }}
