@@ -29,7 +29,7 @@ jobs:
   lint-forgejo:
     # Проверка работы в локальной копии репозитория
     if: ${{ github.server_url != 'https://github.com' }}
-    runs-on: docker
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
