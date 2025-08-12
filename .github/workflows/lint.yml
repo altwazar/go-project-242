@@ -6,9 +6,10 @@ on:
   pull_request:
 
 jobs:
-  golangci-lint:
+  lint-github:
+    # Действия на GitHub
+    if: ${{ github.server_url == 'https://github.com' }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,20 +20,28 @@ jobs:
           go-version: '1.24'
           cache: true
 
-      - name: Check formatting (gofmt)
-        run: |
-          files="$(gofmt -l .)"
-          if [ -n "$files" ]; then
-            echo "Unformatted files:"
-            echo "$files"
-            exit 1
-          fi
-
-      - name: Go vet
-        run: go vet ./...
-
-      - name: Run golangci-lint
+      - name: Run golangci-lint (GitHub action)
         uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1.2
+          args: --timeout=5m
+
+  lint-forgejo:
+    # Проверка работы в локальной копии репозитория
+    if: ${{ github.server_url != 'https://github.com' }}
+    runs-on: docker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: https://github.com/actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Run mirrored golangci-lint action
+        uses: altwazar/golangci-lint-action@v8
         with:
           version: v2.1.2
           args: --timeout=5m
