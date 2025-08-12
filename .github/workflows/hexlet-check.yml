@@ -19,6 +19,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Hexlet project check
-        uses: hexlet/project-action@release
+        uses: http://github.com/hexlet/project-action@release
         with:
           hexlet-id: ${{ secrets.HEXLET_ID }}
