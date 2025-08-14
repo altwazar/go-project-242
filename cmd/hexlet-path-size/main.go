@@ -18,7 +18,11 @@ func main() {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// Нужен один аргумент - путь
 			if cmd.NArg() != 1 {
-				cli.ShowAppHelp(cmd)
+				err := cli.ShowAppHelp(cmd)
+
+				if err != nil {
+					log.Fatal(err)
+				}
 				return cli.Exit("Error: requires one argument - path", 1)
 			}
 
