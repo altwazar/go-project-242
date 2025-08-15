@@ -10,26 +10,29 @@ func TestGetPathSize_File(t *testing.T) {
 	// testdata/dir_with_only_files/
 	var size int64
 	var err error
-	size, err = GetSize("testdata/dir_with_only_files/")
+	size, err = GetSize("testdata/dir_with_only_files/", true)
 	assert.Equal(t, size, int64(132), "they should be equal")
 	assert.Nil(t, err)
 
-	// testdata/dir_with_only_subdirs/
-	// size, err = GetSize("testdata/dir_with_only_subdirs/")
-	// assert.Equal(t, size, int64(0), "they should be equal")
-	// assert.Nil(t, err)
+	size, err = GetSize("testdata/dir_with_only_files/", false)
+	assert.Equal(t, size, int64(125), "they should be equal")
+	assert.Nil(t, err)
 
 	// testdata/dir_with_files_and_subdirs/
-	size, err = GetSize("testdata/dir_with_files_and_subdirs/")
+	size, err = GetSize("testdata/dir_with_files_and_subdirs/", true)
 	assert.Equal(t, size, int64(132), "they should be equal")
 	assert.Nil(t, err)
+
+	size, err = GetSize("testdata/dir_with_files_and_subdirs/", false)
+	assert.Equal(t, size, int64(125), "they should be equal")
+	assert.Nil(t, err)
 	// testdata/dir_with_files_and_subdirs/first_file
-	size, err = GetSize("testdata/dir_with_files_and_subdirs/first_file")
+	size, err = GetSize("testdata/dir_with_files_and_subdirs/first_file", true)
 	assert.Equal(t, size, int64(11), "they should be equal")
 	assert.Nil(t, err)
 
 	// testdata/dir_with_only_files/large_file
-	size, err = GetSize("testdata/dir_with_only_files/large_file")
+	size, err = GetSize("testdata/dir_with_only_files/large_file", true)
 	assert.Equal(t, size, int64(114), "they should be equal")
 	assert.Nil(t, err)
 
