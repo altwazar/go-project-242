@@ -27,6 +27,11 @@ func main() {
 				Aliases: []string{"a"},
 				Value:   false,
 				Usage:   "include hidden files and directories"},
+			&cli.BoolFlag{
+				Name:    "recursive",
+				Aliases: []string{"r"},
+				Value:   false,
+				Usage:   "recursive size of directories"},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// Нужен один аргумент - путь
@@ -41,7 +46,8 @@ func main() {
 
 			path := cmd.Args().Get(0)
 			all := cmd.Bool("all")
-			size, err := code.GetSize(path, all)
+			recursive := cmd.Bool("recursive")
+			size, err := code.GetSize(path, all, recursive)
 
 			if err != nil {
 				log.Fatal(err)

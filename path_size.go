@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func GetSize(path string, all bool) (int64, error) {
+func GetSize(path string, all bool, recursive bool) (int64, error) {
 	pinfo, err := os.Lstat(path)
 	if err != nil {
 		return 0, err
@@ -27,6 +27,13 @@ func GetSize(path string, all bool) (int64, error) {
 			// Только размер файлов
 			if !finfo.IsDir() {
 				size = size + finfo.Size()
+			} else if recursive {
+				npath := path + "/" + file.Name()
+				dsize, err := GetSize(npath, all, recursive)
+				if err != nil {
+					return 0, err
+				}
+				size = dsize
 			}
 		}
 	} else {
