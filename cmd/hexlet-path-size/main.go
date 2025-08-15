@@ -22,6 +22,11 @@ func main() {
 				Aliases: []string{"H"},
 				Value:   false,
 				Usage:   "human-readable sizes (auto-select unit)"},
+			&cli.BoolFlag{
+				Name:    "all",
+				Aliases: []string{"a"},
+				Value:   false,
+				Usage:   "include hidden files and directories"},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// Нужен один аргумент - путь
@@ -35,15 +40,16 @@ func main() {
 			}
 
 			path := cmd.Args().Get(0)
-			size, err := code.GetSize(path)
+			all := cmd.Bool("all")
+			size, err := code.GetSize(path, all)
 
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			h := cmd.Bool("human")
+			human := cmd.Bool("human")
 			// Отформатированный размер
-			fsize := code.FormatSize(size, h)
+			fsize := code.FormatSize(size, human)
 			out := fmt.Sprintf("%s\t%s", fsize, path)
 			fmt.Println(out)
 			return nil

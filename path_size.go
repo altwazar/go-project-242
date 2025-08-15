@@ -3,11 +3,11 @@ package code
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
-func GetSize(path string) (int64, error) {
+func GetSize(path string, all bool) (int64, error) {
 	pinfo, err := os.Lstat(path)
-
 	if err != nil {
 		return 0, err
 	}
@@ -20,6 +20,9 @@ func GetSize(path string) (int64, error) {
 			return 0, err
 		}
 		for _, file := range files {
+			if strings.HasPrefix(file.Name(), ".") && !all {
+				continue
+			}
 			finfo, _ := file.Info()
 			// Только размер файлов
 			if !finfo.IsDir() {
