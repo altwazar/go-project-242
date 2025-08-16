@@ -14,9 +14,14 @@ func main() {
 
 	cmd := &cli.Command{
 		Name:      "hexlet-path-size",
-		Usage:     "show file size",
-		UsageText: "hexlet-path-size [PATH]",
+		Usage:     "print size of a file or directory; supports -r (recursive), -H (human-readable), -a (include hidden)",
+		UsageText: "hexlet-path-size [global options]",
 		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:    "recursive",
+				Aliases: []string{"r"},
+				Value:   false,
+				Usage:   "recursive size of directories"},
 			&cli.BoolFlag{
 				Name:    "human",
 				Aliases: []string{"H"},
@@ -27,11 +32,6 @@ func main() {
 				Aliases: []string{"a"},
 				Value:   false,
 				Usage:   "include hidden files and directories"},
-			&cli.BoolFlag{
-				Name:    "recursive",
-				Aliases: []string{"r"},
-				Value:   false,
-				Usage:   "recursive size of directories"},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// Нужен один аргумент - путь
