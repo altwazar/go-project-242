@@ -7,39 +7,44 @@ import (
 )
 
 func GetSize(path string, all bool, recursive bool) (int64, error) {
+	var total int64
+	dirs := []string{path}
 	pinfo, err := os.Lstat(path)
 	if err != nil {
 		return 0, err
 	}
-	var size int64 = 0
-	// Если директория, то перебор файлов в ней
-	if pinfo.IsDir() {
-		files, err := os.ReadDir(path)
+	if !pinfo.IsDir() {
+		total += pinfo.Size()
+		return total, nil
+	}
 
+	for len(dirs) > 0 {
+		dir := dirs[len(dirs)-1]
+		dirs = dirs[:len(dirs)-1]
+
+		entries, err := os.ReadDir(dir)
 		if err != nil {
 			return 0, err
 		}
-		for _, file := range files {
-			if strings.HasPrefix(file.Name(), ".") && !all {
+
+		for _, entry := range entries {
+			if strings.HasPrefix(entry.Name(), ".") && !all {
 				continue
 			}
-			finfo, _ := file.Info()
-			// Только размер файлов
-			if !finfo.IsDir() {
-				size = size + finfo.Size()
-			} else if recursive {
-				npath := path + "/" + file.Name()
-				dsize, err := GetSize(npath, all, recursive)
-				if err != nil {
-					return 0, err
-				}
-				size = dsize
+			fullPath := dir + "/" + entry.Name()
+
+			info, err := os.Stat(fullPath)
+			if err != nil {
+				return 0, err
+			}
+			if !entry.IsDir() {
+				total += info.Size()
+			} else if entry.IsDir() && recursive {
+				dirs = append(dirs, fullPath)
 			}
 		}
-	} else {
-		size = size + pinfo.Size()
 	}
-	return size, nil
+	return total, nil
 }
 
 // Функция форматирования размера
