@@ -13,66 +13,66 @@ func TestGetPathSize_File(t *testing.T) {
 
 	// testdata/dir_with_only_files/
 	// with hidden, not recursive
-	size, err = GetSize("testdata/dir_with_only_files/", true, false)
+	size, err = GetPathSize("testdata/dir_with_only_files/", true, false)
 	assert.Equal(t, size, int64(132), "they should be equal")
 	assert.Nil(t, err)
 
 	// without hidden, not recursive
-	size, err = GetSize("testdata/dir_with_only_files/", false, false)
+	size, err = GetPathSize("testdata/dir_with_only_files/", false, false)
 	assert.Equal(t, size, int64(125), "they should be equal")
 	assert.Nil(t, err)
 
 	// with hidden, recursive
-	size, err = GetSize("testdata/dir_with_only_files/", true, true)
+	size, err = GetPathSize("testdata/dir_with_only_files/", true, true)
 	assert.Equal(t, size, int64(132), "they should be equal")
 	assert.Nil(t, err)
 
 	// without hidden, recursive
-	size, err = GetSize("testdata/dir_with_only_files/", false, true)
+	size, err = GetPathSize("testdata/dir_with_only_files/", false, true)
 	assert.Equal(t, size, int64(125), "they should be equal")
 	assert.Nil(t, err)
 	// testdata/dir_with_files_and_subdirs/
 	// with hidden, not recursiv
-	size, err = GetSize("testdata/dir_with_files_and_subdirs/", true, false)
+	size, err = GetPathSize("testdata/dir_with_files_and_subdirs/", true, false)
 	assert.Equal(t, size, int64(132), "they should be equal")
 	assert.Nil(t, err)
 
 	// without hidden, not recursive
-	size, err = GetSize("testdata/dir_with_files_and_subdirs/", false, false)
+	size, err = GetPathSize("testdata/dir_with_files_and_subdirs/", false, false)
 	assert.Equal(t, size, int64(125), "they should be equal")
 	assert.Nil(t, err)
 
 	// with hidden, recursive
-	size, err = GetSize("testdata/dir_with_files_and_subdirs/", true, true)
+	size, err = GetPathSize("testdata/dir_with_files_and_subdirs/", true, true)
 	assert.Equal(t, size, int64(559), "they should be equal")
 	assert.Nil(t, err)
 
 	// without hidden, recursive
-	size, err = GetSize("testdata/dir_with_files_and_subdirs/", false, true)
+	size, err = GetPathSize("testdata/dir_with_files_and_subdirs/", false, true)
 	assert.Equal(t, size, int64(552), "they should be equal")
 	assert.Nil(t, err)
 	// testdata/dir_with_files_and_subdirs/first_file
 	// with hidden, not recursive
-	size, err = GetSize("testdata/dir_with_files_and_subdirs/first_file", true, false)
+	size, err = GetPathSize("testdata/dir_with_files_and_subdirs/first_file", true, false)
 	assert.Equal(t, size, int64(11), "they should be equal")
 	assert.Nil(t, err)
 
 	// testdata/dir_with_only_files/large_file
 	// with hidden, not recursive
-	size, err = GetSize("testdata/dir_with_only_files/large_file", true, false)
+	size, err = GetPathSize("testdata/dir_with_only_files/large_file", true, false)
 	assert.Equal(t, size, int64(114), "they should be equal")
 	assert.Nil(t, err)
 	// without hidden, not recursive
-	size, err = GetSize("testdata/dir_with_only_files/large_file", false, false)
+	size, err = GetPathSize("testdata/dir_with_only_files/large_file", false, false)
 	assert.Equal(t, size, int64(114), "they should be equal")
 	assert.Nil(t, err)
 
 	// with hidden, recursive
-	size, err = GetSize("testdata/dir_with_only_files/large_file", true, true)
+	size, err = GetPathSize("testdata/dir_with_only_files/large_file", true, true)
 	assert.Equal(t, size, int64(114), "they should be equal")
 	assert.Nil(t, err)
 	// without hidden, recursive
-	size, err = GetSize("testdata/dir_with_only_files/large_file", false, true)
+	size, err = GetPathSize("testdata/dir_with_only_files/large_file", false, true)
 	assert.Equal(t, size, int64(114), "they should be equal")
 	assert.Nil(t, err)
 	var fsize string

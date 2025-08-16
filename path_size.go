@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func GetSize(path string, all bool, recursive bool) (int64, error) {
+func GetPathSize(path string, all bool, recursive bool) (int64, error) {
 	var total int64
 	dirs := []string{path}
 	pinfo, err := os.Lstat(path)
