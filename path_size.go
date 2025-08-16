@@ -6,16 +6,16 @@ import (
 	"strings"
 )
 
-func GetPathSize(path string, all bool, recursive bool) (int64, error) {
+func GetPathSize(path string, recursive bool, human bool, all bool) (string, error) {
 	var total int64
 	dirs := []string{path}
 	pinfo, err := os.Lstat(path)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	if !pinfo.IsDir() {
 		total += pinfo.Size()
-		return total, nil
+		return FormatSize(total, human), nil
 	}
 
 	for len(dirs) > 0 {
@@ -24,7 +24,7 @@ func GetPathSize(path string, all bool, recursive bool) (int64, error) {
 
 		entries, err := os.ReadDir(dir)
 		if err != nil {
-			return 0, err
+			return FormatSize(total, human), err
 		}
 
 		for _, entry := range entries {
@@ -35,7 +35,7 @@ func GetPathSize(path string, all bool, recursive bool) (int64, error) {
 
 			info, err := os.Stat(fullPath)
 			if err != nil {
-				return 0, err
+				return FormatSize(total, human), err
 			}
 			if !entry.IsDir() {
 				total += info.Size()
@@ -44,7 +44,7 @@ func GetPathSize(path string, all bool, recursive bool) (int64, error) {
 			}
 		}
 	}
-	return total, nil
+	return FormatSize(total, human), nil
 }
 
 // Функция форматирования размера

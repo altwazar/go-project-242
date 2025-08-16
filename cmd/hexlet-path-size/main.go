@@ -47,16 +47,14 @@ func main() {
 			path := cmd.Args().Get(0)
 			all := cmd.Bool("all")
 			recursive := cmd.Bool("recursive")
-			size, err := code.GetPathSize(path, all, recursive)
+			human := cmd.Bool("human")
+			total, err := code.GetPathSize(path, recursive, human, all)
 
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			human := cmd.Bool("human")
-			// Отформатированный размер
-			fsize := code.FormatSize(size, human)
-			out := fmt.Sprintf("%s\t%s", fsize, path)
+			out := fmt.Sprintf("%s\t%s", total, path)
 			fmt.Println(out)
 			return nil
 		},
