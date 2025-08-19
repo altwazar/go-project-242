@@ -3,6 +3,7 @@ package code
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -40,9 +41,8 @@ func getSize(path string, all bool, recursive bool) (int64, error) {
 			if strings.HasPrefix(entry.Name(), ".") && !all {
 				continue
 			}
-			fullPath := dir + "/" + entry.Name()
-
-			info, err := os.Stat(fullPath)
+			fullPath := filepath.Join(dir, entry.Name())
+			info, err := os.Lstat(fullPath)
 			if err != nil {
 				return 0, err
 			}
