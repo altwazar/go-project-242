@@ -1,145 +1,175 @@
 package code
 
 import (
-	"testing"
-
+	"errors"
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"io/fs"
+	"path/filepath"
+	"testing"
 )
 
-func TestGetPathSize_File(t *testing.T) {
+// Тест функции GetPathSize с разной комбинацией флагов.
+// Не тестируется human из-за маленького размера файлов.
+func TestPathSize(t *testing.T) {
+	type tc struct {
+		name                string
+		path                string
+		expNonRecNoHidden   string
+		expRecNoHidden      string
+		expNonRecWithHidden string
+		expRecWithHidden    string
+	}
+	// expNonRecNoHidden - значение без рекурсии и обходом скрытых файлов
+	// expRecNoHidden - c рекурсией, но без обхода скрытых файлов
+	// expNonRecWithHidden - значение без рекурсии, но с обходом скрытых файлов
+	// expRecWithHidden - с рекурсией и обходом скрытых файлов
+	cases := []tc{
+		{
+			name:                "dir_with_only_files",
+			path:                filepath.Join("testdata", "dir_with_only_files"),
+			expNonRecNoHidden:   "125B",
+			expRecNoHidden:      "125B",
+			expNonRecWithHidden: "132B",
+			expRecWithHidden:    "132B",
+		},
+		{
+			name:                "dir_with_files_and_subdirs",
+			path:                filepath.Join("testdata", "dir_with_files_and_subdirs"),
+			expNonRecNoHidden:   "125B",
+			expRecNoHidden:      "553B",
+			expNonRecWithHidden: "132B",
+			expRecWithHidden:    "647B",
+		},
+		{
+			name:                "single_file_first_file",
+			path:                filepath.Join("testdata", "dir_with_files_and_subdirs", "first_file"),
+			expNonRecNoHidden:   "11B",
+			expRecNoHidden:      "11B",
+			expNonRecWithHidden: "11B",
+			expRecWithHidden:    "11B",
+		},
+		{
+			name:                "single_file_large_file",
+			path:                filepath.Join("testdata", "dir_with_only_files", "large_file"),
+			expNonRecNoHidden:   "114B",
+			expRecNoHidden:      "114B",
+			expNonRecWithHidden: "114B",
+			expRecWithHidden:    "114B",
+		},
+		{
+			name:                "hidden_and_visible",
+			path:                filepath.Join("testdata", "hidden_and_visible"),
+			expNonRecNoHidden:   "13B",
+			expRecNoHidden:      "20B",
+			expNonRecWithHidden: "19B",
+			expRecWithHidden:    "45B",
+		},
+	}
 
-	var ssize string
-	var err error
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			checkPathSize(
+				t,
+				c.path,
+				c.expNonRecNoHidden,
+				c.expRecNoHidden,
+				c.expNonRecWithHidden,
+				c.expRecWithHidden,
+				nil,
+			)
+		})
+	}
+}
 
-	// testdata/dir_with_only_files/
-	// with hidden, not recursive
-	ssize, err = GetPathSize("testdata/dir_with_only_files/", false, false, true)
-	assert.Equal(t, ssize, "132B", "they should be equal")
+// Отдельно вариант для проверки несуществующего пути
+func TestNonexistentPath(t *testing.T) {
+	path := filepath.Join("testdata", "___no_such_dir___")
+	checkPathSize(
+		t,
+		path,
+		"", "", "", "",
+		fs.ErrNotExist,
+	)
+}
+
+// Проверка функции formatSize
+// {передаваемое значение, ожидание в байтах, ожидание в сокращенной форме}
+func TestGetPathSizeFile(t *testing.T) {
+	cases := []struct {
+		size   int64
+		expRaw string // human=false
+		expHum string // human=true
+	}{
+		{114, "114B", "114B"},
+		{1140, "1140B", "1.1KB"},
+		{61140, "61140B", "59.7KB"},
+		{50061140, "50061140B", "47.7MB"},
+		{30050061140, "30050061140B", "28.0GB"},
+		{40030050061140, "40030050061140B", "36.4TB"},
+		{70040030050061140, "70040030050061140B", "62.2PB"},
+		{9070040030050061140, "9070040030050061140B", "7.9EB"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("size=%d", c.size), func(t *testing.T) {
+			gotHum := formatSize(c.size, true)
+			gotRaw := formatSize(c.size, false)
+
+			assert.Equal(t, c.expHum, gotHum, "human=true")
+			assert.Equal(t, c.expRaw, gotRaw, "human=false")
+		})
+	}
+}
+
+func checkPathSize(
+	t *testing.T,
+	path string,
+	expNonRecNoHidden, expRecNoHidden, expNonRecWithHidden, expRecWithHidden string,
+	expErr error,
+) {
+	t.Helper()
+
+	if expErr != nil {
+		modes := []struct {
+			rec bool
+			all bool
+			tag string
+		}{
+			{false, false, "non-recursive without hidden"},
+			{true, false, "recursive without hidden"},
+			{false, true, "non-recursive with hidden"},
+			{true, true, "recursive with hidden"},
+		}
+		for _, m := range modes {
+			_, err := GetPathSize(path, m.rec, false, m.all)
+			if err == nil {
+				t.Fatalf("expected error (%s), got nil for %s", expErr, m.tag)
+			}
+			if !errors.Is(err, expErr) {
+				t.Fatalf("expected errors.Is(err, %v) for %s; got err=%v", expErr, m.tag, err)
+			}
+		}
+		return
+	}
+
+	// non-recursive, without hidden
+	ssize, err := GetPathSize(path, false, false, false)
 	assert.Nil(t, err)
+	assert.Equal(t, expNonRecNoHidden, ssize, "non-recursive without hidden")
 
-	// without hidden, not recursive
-	ssize, err = GetPathSize("testdata/dir_with_only_files/", false, false, false)
-	assert.Equal(t, ssize, "125B", "they should be equal")
+	// recursive, without hidden
+	ssize, err = GetPathSize(path, true, false, false)
 	assert.Nil(t, err)
+	assert.Equal(t, expRecNoHidden, ssize, "recursive without hidden")
 
-	// with hidden, recursive
-	ssize, err = GetPathSize("testdata/dir_with_only_files/", true, false, true)
-	assert.Equal(t, ssize, "132B", "they should be equal")
+	// non-recursive, with hidden
+	ssize, err = GetPathSize(path, false, false, true)
 	assert.Nil(t, err)
+	assert.Equal(t, expNonRecWithHidden, ssize, "non-recursive with hidden")
 
-	// without hidden, recursive
-	ssize, err = GetPathSize("testdata/dir_with_only_files/", true, false, false)
-	assert.Equal(t, ssize, "125B", "they should be equal")
+	// recursive, with hidden
+	ssize, err = GetPathSize(path, true, false, true)
 	assert.Nil(t, err)
-	// testdata/dir_with_files_and_subdirs/
-	// with hidden, not recursiv
-	ssize, err = GetPathSize("testdata/dir_with_files_and_subdirs/", false, false, true)
-	assert.Equal(t, ssize, "132B", "they should be equal")
-	assert.Nil(t, err)
-
-	// without hidden, not recursive
-	ssize, err = GetPathSize("testdata/dir_with_files_and_subdirs/", false, false, false)
-	assert.Equal(t, ssize, "125B", "they should be equal")
-	assert.Nil(t, err)
-
-	// with hidden, recursive
-	ssize, err = GetPathSize("testdata/dir_with_files_and_subdirs/", true, false, true)
-	assert.Equal(t, ssize, "559B", "they should be equal")
-	assert.Nil(t, err)
-
-	// without hidden, recursive
-	ssize, err = GetPathSize("testdata/dir_with_files_and_subdirs/", true, false, false)
-	assert.Equal(t, ssize, "552B", "they should be equal")
-	assert.Nil(t, err)
-	// testdata/dir_with_files_and_subdirs/first_file
-	// with hidden, not recursive
-	ssize, err = GetPathSize("testdata/dir_with_files_and_subdirs/first_file", false, false, true)
-	assert.Equal(t, ssize, "11B", "they should be equal")
-	assert.Nil(t, err)
-
-	// testdata/dir_with_only_files/large_file
-	// with hidden, not recursive
-	ssize, err = GetPathSize("testdata/dir_with_only_files/large_file", false, false, true)
-	assert.Equal(t, ssize, "114B", "they should be equal")
-	assert.Nil(t, err)
-	// without hidden, not recursive
-	ssize, err = GetPathSize("testdata/dir_with_only_files/large_file", false, false, false)
-	assert.Equal(t, ssize, "114B", "they should be equal")
-	assert.Nil(t, err)
-
-	// with hidden, recursive
-	ssize, err = GetPathSize("testdata/dir_with_only_files/large_file", true, false, true)
-	assert.Equal(t, ssize, "114B", "they should be equal")
-	assert.Nil(t, err)
-	// without hidden, recursive
-	ssize, err = GetPathSize("testdata/dir_with_only_files/large_file", true, false, false)
-	assert.Equal(t, ssize, "114B", "they should be equal")
-	assert.Nil(t, err)
-
-	var size int64
-	var fsize string
-
-	// Разные значения размеров
-	size = 114
-	fsize = formatSize(size, true)
-	assert.Equal(t, fsize, "114B", "they should be equal")
-
-	fsize = formatSize(size, false)
-	assert.Equal(t, fsize, "114B", "they should be equal")
-
-	size = 1140
-	fsize = formatSize(size, true)
-	assert.Equal(t, fsize, "1.1KB", "they should be equal")
-
-	fsize = formatSize(size, false)
-	assert.Equal(t, fsize, "1140B", "they should be equal")
-
-	size = 61140
-	fsize = formatSize(size, true)
-	assert.Equal(t, fsize, "59.7KB", "they should be equal")
-
-	fsize = formatSize(size, false)
-	assert.Equal(t, fsize, "61140B", "they should be equal")
-
-	size = 50061140
-	fsize = formatSize(size, true)
-	assert.Equal(t, fsize, "47.7MB", "they should be equal")
-
-	fsize = formatSize(size, false)
-	assert.Equal(t, fsize, "50061140B", "they should be equal")
-
-	size = 30050061140
-	fsize = formatSize(size, true)
-	assert.Equal(t, fsize, "28.0GB", "they should be equal")
-
-	fsize = formatSize(size, false)
-	assert.Equal(t, fsize, "30050061140B", "they should be equal")
-
-	size = 40030050061140
-	fsize = formatSize(size, true)
-	assert.Equal(t, fsize, "36.4TB", "they should be equal")
-
-	fsize = formatSize(size, false)
-	assert.Equal(t, fsize, "40030050061140B", "they should be equal")
-
-	size = 40030050061140
-	fsize = formatSize(size, true)
-	assert.Equal(t, fsize, "36.4TB", "they should be equal")
-
-	fsize = formatSize(size, false)
-	assert.Equal(t, fsize, "40030050061140B", "they should be equal")
-
-	size = 70040030050061140
-	fsize = formatSize(size, true)
-	assert.Equal(t, fsize, "62.2PB", "they should be equal")
-
-	fsize = formatSize(size, false)
-	assert.Equal(t, fsize, "70040030050061140B", "they should be equal")
-
-	size = 9070040030050061140
-	fsize = formatSize(size, true)
-	assert.Equal(t, fsize, "7.9EB", "they should be equal")
-
-	fsize = formatSize(size, false)
-	assert.Equal(t, fsize, "9070040030050061140B", "they should be equal")
+	assert.Equal(t, expRecWithHidden, ssize, "recursive with hidden")
 }
